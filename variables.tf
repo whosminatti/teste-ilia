@@ -63,3 +63,13 @@ variable "disk_size" {
   type        = number
   default     = 20
 }
+variable "grafana_storage_size" {
+  description = "The storage size for Grafana (e.g., '20Gi')"
+  type        = string
+  default     = "20Gi"
+}
+variable "storage_class_name" {
+  description = "The storage class name for persistent volumes"
+  type        = string
+  default     = "gp2"
+}
