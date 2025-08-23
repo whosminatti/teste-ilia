@@ -55,7 +55,7 @@ variable "node_min_size" {
 }
 variable "node_instance_type" {
   description = "The instance type for the worker nodes"
-  type        = string
+  type        = list(string)
   default     = ["t3.medium"]
 } 
 variable "disk_size" {
