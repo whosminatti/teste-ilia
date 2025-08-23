@@ -23,8 +23,8 @@ jobs:
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.7  # versão que preferir
-
+          terraform_version: 1.5.7
+          
       - name: Terraform Init
         run: terraform init
 
@@ -34,15 +34,15 @@ jobs:
       - name: terraform state list
         run: terraform state list
       
-      # - name: Terraform Plan
-      #   run: terraform plan -out=tfplan -var-file="main.tfvars" -out=tfplan
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan -var-file="main.tfvars" -out=tfplan
 
       # - name: Terraform Apply
       #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       #   run: terraform apply -auto-approve tfplan
 
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+      # - name: Terraform Destroy
+      #   run: terraform destroy -auto-approve
 
       # - name: Install kubectl
       #   uses: azure/setup-kubectl@v3
