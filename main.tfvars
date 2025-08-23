@@ -11,3 +11,5 @@ node_max_size           = 3
 node_min_size           = 1
 node_instance_type      = ["t3.medium"]
 disk_size               = 20
+grafana_storage_size    = "20Gi"
+storage_class_name      = "gp2"

@@ -4,12 +4,15 @@ resource "aws_eks_cluster" "this" {
   version  = var.k8s_version
 
   vpc_config {
-    subnet_ids             = var.subnet_ids
+    subnet_ids              = var.subnet_ids
     endpoint_private_access = true
     endpoint_public_access  = true
     security_group_ids      = var.security_group_ids
   }
 
+  tags = {
+    Name = var.project_name
+  }
 }
 
 resource "aws_eks_node_group" "this" {
@@ -34,25 +37,7 @@ resource "aws_eks_node_group" "this" {
   tags = {
     Name = "${var.project_name}-node-group"
   }
+
+  # Garante que o cluster esteja pronto antes de criar o node group
+  depends_on = [aws_eks_cluster.this]
 }
-
-resource "kubernetes_persistent_volume_claim" "pvc" {
-  metadata {
-    name      = "grafana-pvc"
-    namespace = "monitoring"
-  }
-
-  spec {
-    access_modes = ["ReadWriteOnce"]
-
-    resources {
-      requests = {
-        storage = "20Gi"
-      }
-    }
-
-    storage_class_name = "gp2" # StorageClass padrão no EKS com EBS
-  }
-}
-
-

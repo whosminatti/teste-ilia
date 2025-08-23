@@ -36,3 +36,12 @@ module "eks" {
   disk_size             = var.disk_size
   ssh_key_name          = "teste-ilia-eks" 
 }
+
+# Módulo para recursos Kubernetes - executa após o cluster EKS estar pronto
+module "kubernetes_resources" {
+  source     = "./modules/kubernetes"
+  depends_on = [module.eks]
+  
+  grafana_storage_size = var.grafana_storage_size
+  storage_class_name   = var.storage_class_name
+}
