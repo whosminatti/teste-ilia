@@ -1,0 +1,49 @@
+name: Deploy Grafana on EKS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-grafana:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+
+    - name: Install Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: 'latest'
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --name teste-ilia --region us-east-1
+
+    - name: Create namespace for Grafana
+      run: |
+        kubectl create namespace monitoring || echo "Namespace ja existe"
+
+    - name: Add Grafana Helm repo and install
+      run: |
+        helm repo add grafana https://grafana.github.io/helm-charts
+        helm repo update
+        helm upgrade --install my-grafana grafana/grafana --namespace monitoring --set persistence.enabled=true --set persistence.size=10Gi
+
+    - name: Verify Grafana pods status
+      run: |
+        kubectl get pods -n monitoring
