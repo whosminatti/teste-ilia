@@ -31,9 +31,10 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
       
-      - name: Terraform RM
-        run: |
-          terraform state rm data.aws_eks_cluster_auth.cluster
+      # - name: Terraform RM
+      #   run: |
+      #     terraform state rm data.aws_eks_cluster.cluster
+      #     terraform state rm data.aws_eks_cluster_auth.cluster
 
 
       # - name: Terraform Plan
