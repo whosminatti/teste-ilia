@@ -104,13 +104,14 @@ jobs:
         run: |
           helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
           helm repo update
+
+          # Instala o EBS CSI Driver com configuração atualizada
           helm upgrade --install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
             --namespace kube-system \
-            --set enableVolumeScheduling=true \
-            --set enableVolumeResizing=true \
-            --set enableVolumeSnapshot=true \
             --set controller.serviceAccount.create=true \
             --set controller.serviceAccount.name=ebs-csi-controller-sa \
+            --set node.serviceAccount.create=true \
+            --set node.serviceAccount.name=ebs-csi-node-sa \
             --wait --timeout=5m
 
       - name: Verifica e cria StorageClass
@@ -137,11 +138,11 @@ jobs:
 
       - name: Verifica se EBS CSI Driver está funcionando
         run: |
-          echo "Verificando pods do EBS CSI Driver..."
-          kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-ebs-csi-driver
+          echo "Aguardando pods do EBS CSI Driver..."
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=aws-ebs-csi-driver -n kube-system --timeout=300s
           
-          echo "Verificando logs do driver..."
-          kubectl logs -n kube-system -l app=ebs-csi-controller --container=ebs-plugin --tail=10 || echo "Logs não disponíveis ainda"
+          echo "Pods do EBS CSI Driver:"
+          kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-ebs-csi-driver
 
       - name: Cria namespace monitoring
         run: |
