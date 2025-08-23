@@ -20,6 +20,7 @@ module "iam" {
 
 module "eks" {
   source                = "./modules/eks"
+  depends_on            = [module.iam]
   project_name          = var.project_name
   cluster_role_arn      = module.iam.eks_cluster_role_arn
   k8s_version           = var.k8s_version
