@@ -22,8 +22,3 @@ resource "aws_security_group" "eks_cluster_sg" {
     Name = "${var.project_name}-eks-cluster-sg"
   }
 }
-
-output "eks_cluster_security_group_id" {
-  value = aws_security_group.eks_cluster_sg.id
-}
-
