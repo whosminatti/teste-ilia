@@ -38,6 +38,7 @@ module "eks" {
 }
 
 # Módulo para recursos Kubernetes - executa após o cluster EKS estar pronto
+# Tive que separar em outro módulo para garantir a ordem de criação
 module "kubernetes_resources" {
   source     = "./modules/kubernetes"
   depends_on = [module.eks]

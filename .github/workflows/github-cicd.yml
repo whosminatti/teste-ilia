@@ -6,8 +6,12 @@ on:
       - main
 
 jobs:
-  terraform:
+  terraform-infrastructure:
+    name: Deploy AWS Infrastructure
     runs-on: ubuntu-latest
+    outputs:
+      cluster-name: ${{ steps.cluster-info.outputs.cluster-name }}
+      cluster-endpoint: ${{ steps.cluster-info.outputs.cluster-endpoint }}
 
     steps:
       - name: Checa repo
@@ -24,56 +28,131 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.7
-          
+          terraform_wrapper: false  # Importante para capturar outputs
+
       - name: Terraform Init
         run: terraform init
 
       - name: Terraform Validate
         run: terraform validate
 
-      - name: terraform state list
+      - name: Terraform state list
         run: terraform state list
+        continue-on-error: true  # Pode falhar se não houver state ainda
       
       - name: Terraform Plan
-        run: terraform plan -out=tfplan -var-file="main.tfvars" -out=tfplan
+        run: terraform plan -var-file="main.tfvars" -out=tfplan
 
-      # - name: Terraform Apply
-      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      #   run: terraform apply -auto-approve tfplan
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
 
-      # - name: Terraform Destroy
-      #   run: terraform destroy -auto-approve
+      - name: cluster info
+        id: cluster-info
+        run: |
+          CLUSTER_NAME=$(terraform output -raw cluster_name || echo "teste-ilia")
+          CLUSTER_ENDPOINT=$(terraform output -raw cluster_endpoint || echo "")
+          echo "cluster-name=${CLUSTER_NAME}" >> $GITHUB_OUTPUT
+          echo "cluster-endpoint=${CLUSTER_ENDPOINT}" >> $GITHUB_OUTPUT
 
-      # - name: Install kubectl
-      #   uses: azure/setup-kubectl@v3
-      #   with:
-      #     version: 'latest'
+      - name: Aguarda EKS ficar ready
+        run: |
+          echo "Aguardando cluster EKS estar completamente pronto..."
+          aws eks wait cluster-active --name ${{ steps.cluster-info.outputs.cluster-name }}
+          
+          echo "Aguardando node group estar pronto..."
+          aws eks wait nodegroup-active --cluster-name ${{ steps.cluster-info.outputs.cluster-name }} --nodegroup-name teste-ilia-node-group
 
-      # - name: Install Helm
-      #   uses: azure/setup-helm@v4
-      #   with:
-      #     version: 'latest'
+  kubernetes-deployment:
+    name: Deploy Kubernetes Resources
+    runs-on: ubuntu-latest
+    needs: terraform-infrastructure
+    if: success()
 
-      # - name: Update kubeconfi pra conectar com EKS
-      #   run: |
-      #     aws eks update-kubeconfig --name teste-ilia --region us-east-1
+    steps:
+      - name: Checa repo
+        uses: actions/checkout@v3
 
-      # - name: Cria NS monitoring
-      #   run: |
-      #     kubectl get namespace monitoring || kubectl create namespace monitoring
+      - name: Configura AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      # - name: Add Grafana Helm repo and update
-      #   run: |
-      #     helm repo add grafana https://grafana.github.io/helm-charts
-      #     helm repo update
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
 
-      # - name: Install ou upgrade Grafana Helm chart
-      #   run: |
-      #     helm upgrade --install my-grafana grafana/grafana --namespace monitoring \
-      #       --set persistence.enabled=true \
-      #       --set persistence.size=10Gi \
-      #       --set adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }} \
-      #       --set service.type=LoadBalancer
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
 
-      # - name: Checa status pods do grafana
-      #   run: kubectl get pods -n monitoring
+      - name: Update kubeconfig pra conectar com EKS
+        run: |
+          aws eks update-kubeconfig --name ${{ needs.terraform-infrastructure.outputs.cluster-name }} --region us-east-1
+
+      - name: Verifica conectividade com cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+          
+      - name: Aguarda nodes estarem prontos
+        run: |
+          kubectl wait --for=condition=Ready nodes --all --timeout=300s
+
+      # Apos criacao do cluster, roda novamente o terraform init e apply para criar recursos k8s
+      - name: Install Terraform (para módulo Kubernetes)
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Init (novamente para garantir)
+        run: terraform init
+
+      - name: Apply apenas recursos Kubernetes
+        run: |
+          terraform apply -auto-approve -target=module.kubernetes_resources -var-file="main.tfvars"
+
+      - name: Cria NS monitoring (se não existir)
+        run: |
+          kubectl get namespace monitoring || kubectl create namespace monitoring
+
+      - name: Add Grafana Helm repo and update
+        run: |
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+
+      - name: Install ou upgrade Grafana Helm chart
+        run: |
+          helm upgrade --install my-grafana grafana/grafana --namespace monitoring \
+            --set persistence.enabled=true \
+            --set persistence.size=10Gi \
+            --set persistence.existingClaim=grafana-pvc \
+            --set adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }} \
+            --set service.type=LoadBalancer \
+            --wait --timeout=10m
+
+      - name: Checa status pods do grafana
+        run: |
+          kubectl get pods -n monitoring
+          kubectl get pvc -n monitoring
+          kubectl get svc -n monitoring
+
+      - name: Aguarda Grafana estar pronto
+        run: |
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana -n monitoring --timeout=300s
+
+      - name: Get Grafana LoadBalancer URL
+        run: |
+          echo "Aguardando LoadBalancer URL..."
+          sleep 60
+          GRAFANA_URL=$(kubectl get svc my-grafana -n monitoring -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          if [ -n "$GRAFANA_URL" ]; then
+            echo "Grafana disponível em: http://$GRAFANA_URL"
+          else
+            echo "LoadBalancer ainda não tem URL externa. Verificando..."
+            kubectl get svc my-grafana -n monitoring
+          fi
