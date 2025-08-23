@@ -17,13 +17,3 @@ output "node_group_arn" {
   description = "ARN of the EKS node group"
   value       = module.eks.node_group_arn
 }
-
-output "monitoring_namespace" {
-  description = "Name of the monitoring namespace"
-  value       = module.kubernetes_resources.monitoring_namespace
-}
-
-output "grafana_pvc_name" {
-  description = "Name of the Grafana PVC"
-  value       = module.kubernetes_resources.grafana_pvc_name
-}
