@@ -1,7 +1,7 @@
 module "vpc" {
   source                = "./modules/vpc"
   cidr_block            = var.vpc_cidr
-  project_name                  = var.project_name
+  project_name          = var.project_name
   public_subnet_cidrs   = var.public_subnet_cidrs
   private_subnet_cidrs  = var.private_subnet_cidrs
   availability_zones    = var.availability_zones
@@ -24,7 +24,7 @@ module "eks" {
   cluster_role_arn      = module.iam.eks_cluster_role_arn
   k8s_version           = var.k8s_version
   subnet_ids            = module.vpc.private_subnet_ids
-  security_group_ids    = [module.security_groups.eks_cluster_security_group_id]
+  security_group_ids    = [module.security_groups.id]
   node_role_arn         = module.iam.eks_node_role_arn
   node_desired_size     = var.node_desired_size
   node_max_size         = var.node_max_size

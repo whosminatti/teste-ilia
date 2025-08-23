@@ -38,3 +38,28 @@ variable "k8s_version" {
   type        = string
   default     = "1.32"
 }
+variable "node_desired_size" {
+  description = "The desired number of worker nodes"
+  type        = number
+  default     = 2
+}
+variable "node_max_size" {
+  description = "The maximum number of worker nodes"
+  type        = number
+  default     = 3
+}
+variable "node_min_size" {
+  description = "The minimum number of worker nodes"
+  type        = number
+  default     = 1
+}
+variable "node_instance_type" {
+  description = "The instance type for the worker nodes"
+  type        = string
+  default     = "t3.medium"
+} 
+variable "disk_size" {
+  description = "The volume size for the worker nodes (in GB)"
+  type        = number
+  default     = 20
+}
