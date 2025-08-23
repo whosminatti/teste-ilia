@@ -1,19 +1,19 @@
-name: Deploy EKS Cluster with Terraform
+name: Deploy EKS Cluster com Terraform + Grafana com Helm
 
 on:
   push:
     branches:
-      - main  # ou a branch que deseja monitorar
+      - main
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out repo
+      - name: Checa repo
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
+      - name: Configura AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -48,11 +48,11 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Update kubeconfig to connect to EKS
+      - name: Update kubeconfi pra conectar com EKS
         run: |
           aws eks update-kubeconfig --name teste-ilia --region us-east-1
 
-      - name: Create monitoring namespace if not exists
+      - name: Cria NS monitoring
         run: |
           kubectl get namespace monitoring || kubectl create namespace monitoring
 
@@ -61,7 +61,7 @@ jobs:
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
 
-      - name: Install or upgrade Grafana Helm chart
+      - name: Install ou upgrade Grafana Helm chart
         run: |
           helm upgrade --install my-grafana grafana/grafana --namespace monitoring \
             --set persistence.enabled=true \
@@ -69,6 +69,6 @@ jobs:
             --set adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }} \
             --set service.type=LoadBalancer
 
-      - name: Check Grafana pods status in monitoring namespace
+      - name: Checa status pods do grafana
         run: kubectl get pods -n monitoring
 
