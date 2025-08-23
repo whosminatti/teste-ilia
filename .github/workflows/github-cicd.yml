@@ -21,7 +21,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
@@ -39,10 +39,10 @@ jobs:
         run: terraform state list
         continue-on-error: true
       
-      - name: Terraform Plan (sem módulo Kubernetes)
+      - name: Terraform Plan
         run: terraform plan -var-file="main.tfvars" -out=tfplan
 
-      - name: Terraform Apply (sem módulo Kubernetes)
+      - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve tfplan
 
@@ -75,7 +75,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
@@ -89,7 +89,7 @@ jobs:
 
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --name ${{ needs.terraform-infrastructure.outputs.cluster-name }} --region ${{ secrets.AWS_REGION }}
+          aws eks update-kubeconfig --name ${{ needs.terraform-infrastructure.outputs.cluster-name }} --region us-east-1
 
       - name: Verifica conectividade com cluster
         run: |
@@ -99,6 +99,51 @@ jobs:
       - name: Aguarda nodes estarem prontos
         run: |
           kubectl wait --for=condition=Ready nodes --all --timeout=300s
+
+      # INSTALAR EBS CSI DRIVER
+      - name: Instala AWS EBS CSI Driver Add-on
+        run: |
+          echo "Instalando EBS CSI Driver..."
+          aws eks create-addon \
+            --cluster-name ${{ needs.terraform-infrastructure.outputs.cluster-name }} \
+            --addon-name aws-ebs-csi-driver \
+            --resolve-conflicts OVERWRITE \
+            --region us-east-1 || echo "Add-on já existe ou erro esperado"
+
+      - name: Aguarda EBS CSI Driver estar pronto
+        run: |
+          echo "Aguardando EBS CSI Driver estar ativo..."
+          timeout 600 bash -c '
+          while true; do
+            STATUS=$(aws eks describe-addon --cluster-name ${{ needs.terraform-infrastructure.outputs.cluster-name }} --addon-name aws-ebs-csi-driver --query "addon.status" --output text --region us-east-1 2>/dev/null || echo "CREATING")
+            echo "Status do EBS CSI Driver: $STATUS"
+            if [ "$STATUS" = "ACTIVE" ]; then
+              echo "✅ EBS CSI Driver está ativo!"
+              break
+            fi
+            sleep 15
+          done'
+
+      - name: Verifica StorageClass gp2
+        run: |
+          echo "Verificando StorageClasses disponíveis:"
+          kubectl get storageclass
+          
+          # Se gp2 não existir, criar
+          if ! kubectl get storageclass gp2; then
+            echo "Criando StorageClass gp2..."
+            cat <<EOF | kubectl apply -f -
+            apiVersion: storage.k8s.io/v1
+            kind: StorageClass
+            metadata:
+              name: gp2
+            provisioner: ebs.csi.aws.com
+            parameters:
+              type: gp2
+              fsType: ext4
+            volumeBindingMode: WaitForFirstConsumer
+            EOF
+          fi
 
       - name: Cria namespace monitoring
         run: |
@@ -121,10 +166,11 @@ jobs:
             storageClassName: gp2
           EOF
 
-      - name: Verifica PVC criado
+      - name: Aguarda PVC estar Bound
         run: |
-          kubectl get pvc -n monitoring
+          echo "Aguardando PVC ser provisionado..."
           kubectl wait --for=condition=Bound pvc/grafana-pvc -n monitoring --timeout=300s
+          kubectl get pvc -n monitoring
 
       - name: Add Grafana Helm repo and update
         run: |
@@ -149,6 +195,8 @@ jobs:
           kubectl get pvc -n monitoring
           echo "=== SERVICES ==="
           kubectl get svc -n monitoring
+          echo "=== STORAGE CLASSES ==="
+          kubectl get storageclass
 
       - name: Aguarda Grafana estar pronto
         run: |
@@ -166,4 +214,6 @@ jobs:
           else
             echo "⏳ LoadBalancer ainda não tem URL externa. Status atual:"
             kubectl get svc my-grafana -n monitoring
+            echo "Tentando pegar IP externo..."
+            kubectl get svc my-grafana -n monitoring -o wide
           fi
