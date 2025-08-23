@@ -24,12 +24,11 @@ module "eks" {
   cluster_role_arn      = module.iam.eks_cluster_role_arn
   k8s_version           = var.k8s_version
   subnet_ids            = module.vpc.private_subnet_ids
-  security_group_ids    = [module.security_groups.id]
   node_role_arn         = module.iam.eks_node_role_arn
   node_desired_size     = var.node_desired_size
   node_max_size         = var.node_max_size
   node_min_size         = var.node_min_size
-  instance_types        = var.instance_types
+  instance_types        = var.node_instance_type
   disk_size             = var.disk_size
   ssh_key_name          = "my-ssh-key" 
 }

@@ -66,14 +66,11 @@ resource "aws_nat_gateway" "this" {
   }
 }
 
-// Create an Elastic IP for the NAT Gateway
 resource "aws_eip" "nat" {
-  vpc = true
-
-  tags = {
-    Name = "${var.project_name}-nat-eip"
-  }
+  domain = "vpc"
+  depends_on = [aws_internet_gateway.this]
 }
+
 
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.this.id
