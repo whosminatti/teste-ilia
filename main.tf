@@ -25,6 +25,7 @@ module "eks" {
   k8s_version           = var.k8s_version
   subnet_ids            = module.vpc.private_subnet_ids
   node_role_arn         = module.iam.eks_node_role_arn
+  security_group_ids    = [module.security_groups.eks_cluster_security_group_id]
   node_desired_size     = var.node_desired_size
   node_max_size         = var.node_max_size
   node_min_size         = var.node_min_size
