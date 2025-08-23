@@ -51,7 +51,7 @@ resource "kubernetes_persistent_volume_claim" "pvc" {
       }
     }
 
-    storage_class_name = "gp3" # StorageClass padrão no EKS com EBS
+    storage_class_name = "gp2" # StorageClass padrão no EKS com EBS
   }
 }
 
