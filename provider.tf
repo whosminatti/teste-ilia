@@ -20,16 +20,24 @@ provider "aws" {
   region = var.region
 }
 
+variable "create_eks" {
+  type    = bool
+  default = true
+}
+
 data "aws_eks_cluster" "cluster" {
-  name = var.project_name
+  count = var.create_eks ? 1 : 0
+  name  = var.project_name
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = data.aws_eks_cluster.cluster.name
+  count = var.create_eks ? 1 : 0
+  name  = var.project_name
 }
 
 provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
+  host                   = var.create_eks ? data.aws_eks_cluster.cluster[0].endpoint : ""
+  cluster_ca_certificate = var.create_eks ? base64decode(data.aws_eks_cluster.cluster.certificate_authority.data) : ""
+  token                  = var.create_eks ? data.aws_eks_cluster_auth.cluster.token : ""
 }
+

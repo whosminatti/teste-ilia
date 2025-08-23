@@ -50,8 +50,11 @@ jobs:
       #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       #   run: terraform apply -auto-approve tfplan
 
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+      - name: Terraform Destroy EKS FALSE
+        run: terraform destroy -auto-approve -var="create_eks=false"
+
+      - name: Terraform Destroy EKS TRUE
+        run: terraform destroy -auto-approve -var="create_eks=true"
 
       # - name: Install kubectl
       #   uses: azure/setup-kubectl@v3
