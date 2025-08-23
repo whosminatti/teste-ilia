@@ -134,21 +134,21 @@ jobs:
         run: |
           echo "Verificando StorageClasses disponíveis:"
           kubectl get storageclass
-          
+                  
           # Se gp2 não existir, criar
           if ! kubectl get storageclass gp2; then
             echo "Criando StorageClass gp2..."
             cat <<EOF | kubectl apply -f -
-            apiVersion: storage.k8s.io/v1
-            kind: StorageClass
-            metadata:
-              name: gp2
-            provisioner: ebs.csi.aws.com
-            parameters:
-              type: gp2
-              fsType: ext4
-            volumeBindingMode: WaitForFirstConsumer
-            EOF
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: gp2
+          provisioner: ebs.csi.aws.com
+          parameters:
+            type: gp2
+            fsType: ext4
+          volumeBindingMode: WaitForFirstConsumer
+          EOF
           fi
 
       - name: Cria namespace monitoring
