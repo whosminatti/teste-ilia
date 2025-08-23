@@ -34,5 +34,5 @@ module "eks" {
   node_min_size         = var.node_min_size
   instance_types        = var.node_instance_type
   disk_size             = var.disk_size
-  ssh_key_name          = "my-ssh-key" 
+  ssh_key_name          = "teste-ilia-eks" 
 }
