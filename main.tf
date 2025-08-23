@@ -10,12 +10,12 @@ module "vpc" {
 module "security_groups" {
   source                = "./modules/security_groups"
   vpc_id                = module.vpc.vpc_id
-  name                  = "${var.project_name}-eks"
+  project_name                  = "${var.project_name}-eks"
 }
 
 module "iam" {
   source                = "./modules/iam"
-  name                  = "${var.project_name}-eks"
+  project_name                  = "${var.project_name}-eks"
 }
 
 module "eks" {
