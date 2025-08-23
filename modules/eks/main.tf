@@ -10,7 +10,6 @@ resource "aws_eks_cluster" "this" {
     security_group_ids      = var.security_group_ids
   }
 
-  depends_on = [aws_iam_role_policy_attachment.cluster_policy]
 }
 
 resource "aws_eks_node_group" "this" {

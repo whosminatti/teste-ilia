@@ -9,18 +9,20 @@ module "vpc" {
 
 module "security_groups" {
   source                = "./modules/security_groups"
+  depends_on            = [module.vpc]
   vpc_id                = module.vpc.vpc_id
   project_name          = "${var.project_name}-eks"
 }
 
 module "iam" {
   source                = "./modules/iam"
+  depends_on            = [module.vpc]
   project_name          = "${var.project_name}-eks"
 }
 
 module "eks" {
   source                = "./modules/eks"
-  depends_on            = [module.iam]
+  depends_on            = [module.iam, module.vpc, module.security_groups]
   project_name          = var.project_name
   cluster_role_arn      = module.iam.eks_cluster_role_arn
   k8s_version           = var.k8s_version
