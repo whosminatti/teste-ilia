@@ -36,5 +36,23 @@ resource "aws_eks_node_group" "this" {
   }
 }
 
+resource "kubernetes_persistent_volume_claim" "pvc" {
+  metadata {
+    name      = "grafana-pvc"
+    namespace = "monitoring"
+  }
+
+  spec {
+    access_modes = ["ReadWriteOnce"]
+
+    resources {
+      requests = {
+        storage = "20Gi"
+      }
+    }
+
+    storage_class_name = "gp3" # StorageClass padrão no EKS com EBS
+  }
+}
 
 
