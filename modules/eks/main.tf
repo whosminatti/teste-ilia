@@ -38,20 +38,63 @@ resource "aws_eks_node_group" "this" {
     Name = "${var.project_name}-node-group"
   }
 
-  # Garante que o cluster esteja pronto antes de criar o node group
   depends_on = [aws_eks_cluster.this]
 }
 
-# EBS CSI Driver Add-on
+# Data source para obter OIDC issuer URL
+data "aws_eks_cluster" "cluster" {
+  name = aws_eks_cluster.this.name
+}
+
+# Extrair OIDC issuer URL
+data "aws_iam_openid_connect_provider" "cluster" {
+  url = data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer
+}
+
+# IAM Role para EBS CSI Driver
+resource "aws_iam_role" "ebs_csi_driver_role" {
+  name = "${var.project_name}-ebs-csi-driver-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Federated = data.aws_iam_openid_connect_provider.cluster.arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "${replace(data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer, "https://", "")}:sub" = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+            "${replace(data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer, "https://", "")}:aud" = "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.project_name}-ebs-csi-driver-role"
+  }
+}
+
+# Attach da policy necessária ao EBS CSI Driver
+resource "aws_iam_role_policy_attachment" "ebs_csi_driver_policy" {
+  role       = aws_iam_role.ebs_csi_driver_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+}
+
+# EBS CSI Driver Add-on (versão simplificada)
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name             = aws_eks_cluster.this.name
   addon_name               = "aws-ebs-csi-driver"
-  addon_version            = "v1.35.0-eksbuild.1"
   resolve_conflicts        = "OVERWRITE"
-  service_account_role_arn = var.ebs_csi_driver_role_arn
+  service_account_role_arn = aws_iam_role.ebs_csi_driver_role.arn
 
   depends_on = [
-    aws_eks_node_group.this
+    aws_eks_node_group.this,
+    aws_iam_role_policy_attachment.ebs_csi_driver_policy
   ]
 
   tags = {
