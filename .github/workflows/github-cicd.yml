@@ -37,3 +37,38 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve tfplan
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Update kubeconfig to connect to EKS
+        run: |
+          aws eks update-kubeconfig --name teste-ilia --region us-east-1
+
+      - name: Create monitoring namespace if not exists
+        run: |
+          kubectl get namespace monitoring || kubectl create namespace monitoring
+
+      - name: Add Grafana Helm repo and update
+        run: |
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+
+      - name: Install or upgrade Grafana Helm chart
+        run: |
+          helm upgrade --install my-grafana grafana/grafana --namespace monitoring \
+            --set persistence.enabled=true \
+            --set persistence.size=10Gi \
+            --set adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }} \
+            --set service.type=LoadBalancer
+
+      - name: Check Grafana pods status in monitoring namespace
+        run: kubectl get pods -n monitoring
+
