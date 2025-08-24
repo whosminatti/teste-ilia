@@ -1,6 +1,8 @@
 resource "aws_timestreamwrite_database" "this" {
   database_name = var.database_name
-  tags          = var.project_name
+  tags          = {
+    Name = var.project_name
+  }
 }
 
 resource "aws_timestreamwrite_table" "this" {
@@ -12,5 +14,7 @@ resource "aws_timestreamwrite_table" "this" {
     magnetic_store_retention_period_in_days = var.magnetic_retention_days
   }
 
-  tags          = var.project_name
+  tags = {
+    Name = var.project_name
+  }
 }
