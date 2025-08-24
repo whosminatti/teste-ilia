@@ -35,7 +35,7 @@ resource "aws_eks_node_group" "this" {
   }
 
   tags = {
-    Name = "${var.project_name}-node-group"
+    Name = var.project_name
   }
 
   depends_on = [aws_eks_cluster.this]
@@ -58,7 +58,7 @@ resource "aws_iam_openid_connect_provider" "cluster" {
   url             = data.aws_eks_cluster.cluster.identity[0].oidc[0].issuer
 
   tags = {
-    Name = "${var.project_name}-eks-irsa"
+    Name = var.project_name
   }
 }
 
@@ -86,7 +86,7 @@ resource "aws_iam_role" "ebs_csi_driver_role" {
   })
 
   tags = {
-    Name = "${var.project_name}-ebs-csi-driver-role"
+    Name = var.project_name
   }
 }
 
@@ -110,6 +110,6 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   ]
 
   tags = {
-    Name = "${var.project_name}-ebs-csi-driver"
+    Name = var.project_name
   }
 }

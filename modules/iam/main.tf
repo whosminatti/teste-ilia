@@ -14,7 +14,7 @@ resource "aws_iam_role" "eks_cluster_role" {
   assume_role_policy = data.aws_iam_policy_document.eks_assume_role.json
 
   tags = {
-    Name = "${var.project_name}-eks-cluster-role"
+    Name = var.project_name
   }
 }
 
@@ -44,7 +44,7 @@ resource "aws_iam_role" "eks_node_role" {
   assume_role_policy = data.aws_iam_policy_document.node_assume_role.json
 
   tags = {
-    Name = "${var.project_name}-eks-node-role"
+    Name = var.project_name
   }
 }
 
@@ -61,4 +61,9 @@ resource "aws_iam_role_policy_attachment" "cni_policy" {
 resource "aws_iam_role_policy_attachment" "registry_policy" {
   role       = aws_iam_role.eks_node_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+resource "aws_iam_role_policy_attachment" "timestream_full_access" {
+  role       = aws_iam_role.eks_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonTimestreamFullAccess"
 }

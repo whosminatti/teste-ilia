@@ -1,46 +1,109 @@
 # teste-ilia
 
-### Rede (VPC)
+---
 
-1 VPC principal com CIDR 10.0.0.0/16
-1 Internet Gateway para acesso à internet
-1 NAT Gateway para saída dos recursos privados
-1 Elastic IP para o NAT Gateway
+# Infraestrutura
 
-### Subnets (4 subnets)
+### VPC
 
-2 Subnets Públicas: 10.0.1.0/24 e 10.0.2.0/24
-2 Subnets Privadas: 10.0.3.0/24 e 10.0.4.0/24
-Distribuídas nas AZs us-east-1a e us-east-1b
+- VPC com DNS e hostnames habilitados
+- Subnets públicas com IP publico e subnets privadas distribuídas pelas AZs
+- Internet Gateway para acesso a internet
+- NAT Gateway na subnet publica com Elastic IP
 
-### Roteamento
+- Route Tables
+  - Publica: roteamento 0.0.0.0/0 → Internet Gateway
+  - Privada: roteamento 0.0.0.0/0 → NAT Gateway
+- Associações de Route Table
 
-2 Route Tables (pública e privada)
-4 Route Table Associations (uma para cada subnet)
+### EKS
 
-### EKS 
+- EKS Cluster
+  - Versão definida em var.k8s_version
+  - Endpoints público e privado habilitados
+  - Associado a Security Groups específicos
 
-1 EKS Cluster com Kubernetes v1.32
-1 Node Group com instâncias t3.medium
-
-Configuração: Min: 1, Desired: 2, Max: 3 nodes
-Disco: 20GB por node
-
+- Node Group
+  - Auto Scaling configurado
+  - Acesso remoto via chave SSH configurado via terraform
+- IAM Roles for Service Accounts
+- EBS CSI Driver addon com IAM Role dedicada para gerenciamento de PV (EBS)
 
 ### IAM
 
-2 IAM Roles: uma para o cluster, outra para os nodes
-5 Policy Attachments:
+- Role do Cluster EKS
+  - Policies
+    - AmazonEKSClusterPolicy
+    - AmazonEKSServicePolicy
 
-AmazonEKSClusterPolicy
-AmazonEKSServicePolicy
-AmazonEKSWorkerNodePolicy
-AmazonEKSCNIPolicy
-AmazonEC2ContainerRegistryReadOnly
+- Role dos Worker Nodes
+  - Policies
+    - AmazonEKSWorkerNodePolicy - gerenciamento de nodes
+    - AmazonEKS_CNI_Policy - rede do Kubernetes
+    - AmazonEC2ContainerRegistryReadOnly - acesso ao ECR
 
-###  Security Groups
+- Role do EBS CSI Driver
+  - Policies
+    - AmazonEBSCSIDriverPolicy
 
-1 Security Group para o EKS cluster
+- Security Groups
+  - Security Group para o EKS Cluster
+    - Ingress: API Server do Kubernetes liberada para qualquer origem na porta 443
+    - Egress: Todo o tráfego liberado
 
-Ingress: Porta 443 (HTTPS) de qualquer lugar
-Egress: Todo tráfego liberado
+### Timestream
+
+- Database Timestream
+- Tabela Timestream
+
+
+# GitHub Actions Workflow
+
+## Jobs
+
+### Terraform Infrastructure
+
+- Provisiona infraestrutura AWS (VPC, EKS, Node Group, Timestream, IAM, Policies e Security Groups) via Terraform
+
+- Steps
+  - Checkout do repositório
+  - Configuração de credenciais AWS com GitHub Secrets
+  - Instalação do Terraform
+  - Terraform init
+  - Terraform validate
+  - Terraform plan
+  - Terraform state list (para caso já exista estrutura provisionada)
+  - Terraform apply com auto-approve
+  - Terraform output
+  - Espera EKS e Node Group ficarem ativos
+  
+### Kubernetes Deployment
+
+> Optei por separar as configurações do K8s do terraform para ficar mais fácil a leitura e manutenção do código
+
+- Configura recursos Kubernetes e instala o Grafana no cluster
+
+- Steps
+  - Checkout do repositório
+  - Configuração de credenciais AWS com GitHub Secrets
+  - Instala kubectl e helm
+  - Atualiza kubeconfi pra poder conectar no cluster
+  - Verifica de conectividade com o cluster
+  - Espera pelos nodes ficarem prontos
+  - Configuração do EBS CSI Driver
+    - Verifica StorageClasses disponíveis
+    - Remove gp2 caso exista
+    - Aplica nova configuração via manifest
+    - Aguarda pods estarem prontos
+  - Cria namespace monitoring
+  - Teste de provisionamento de volume com PVC de teste
+  - Cria PV PVC pro Grafana via manifest
+  - Espera até o PVC do Grafana estar Bound (até 10 minutos)
+  - Instalação do Helm chart do Grafana com:
+    - Persistência habilitada (20Gi)
+    - PVC existente (grafana-pvc)
+    - Senha admin via secret GRAFANA_ADMIN_PASSWORD
+    - Service exposto como LoadBalancer (NLB da AWS)
+  - Check de pods, PVCs, services e storage classes
+  - Aguarda Grafana ficar pronto
+  - Exibe o endpoint público do Grafana URL doLoadBalancer

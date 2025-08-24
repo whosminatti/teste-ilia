@@ -1,6 +1,6 @@
 resource "aws_security_group" "eks_cluster_sg" {
   name_prefix = "${var.project_name}-eks-cluster-"
-  description = "Security group for EKS cluster communication"
+  description = "Security group pra comunicação do EKS"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -19,6 +19,6 @@ resource "aws_security_group" "eks_cluster_sg" {
   }
 
   tags = {
-    Name = "${var.project_name}-eks-cluster-sg"
+    Name = var.project_name
   }
 }

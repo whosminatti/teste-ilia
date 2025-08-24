@@ -37,4 +37,12 @@ module "eks" {
   ssh_key_name          = "teste-ilia-eks" 
 }
 
-# Módulo kubernetes_resources removido - gerenciado via kubectl no GitHub Actions
+module "timestream" {
+  source                = "./modules/timestream"
+  project_name          = var.project_name
+  create_iam_role       = var.create_iam_role
+  database_name         = var.timestream_database_name
+  table_name            = var.timestream_table_name
+  memory_store_retention_period_in_hours = var.memory_store_retention_period_in_hours
+  magnetic_store_retention_period_in_days = var.magnetic_store_retention_period_in_days
+}
