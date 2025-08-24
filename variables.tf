@@ -50,20 +50,9 @@ variable "disk_size" {
   description = "The volume size for the worker nodes (in GB)"
   type        = number
 }
-variable "timestream_database_name" {
-  description = "Nome do banco de dados Timestream"
-  type        = string
+variable "athena_database_name" {
+  default = "monitoring_db"
 }
-variable "timestream_table_name" {
-  description = "Nome da tabela Timestream"
-  type        = string
+variable "athena_table_name" {
+  default = "iot_events"
 }
-variable "retention_days" {
-  description = "Dias de retenção de dados na memória"
-  type        = number
-}
-variable "magnetic_retention_days" {
-  description = "Dias de retenção de dados em armazenamento magnético"
-  type        = number
-}
-

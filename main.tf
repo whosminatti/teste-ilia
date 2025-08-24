@@ -37,11 +37,9 @@ module "eks" {
   ssh_key_name            = "teste-ilia-eks" 
 }
 
-module "timestream" {
-  source                  = "./modules/timestream"
+module "athena" {
+  source                  = "./modules/athena"
   project_name            = var.project_name
-  database_name           = var.timestream_database_name
-  table_name              = var.timestream_table_name
-  retention_days          = var.retention_days
-  magnetic_retention_days = var.magnetic_retention_days
+  database_name           = var.athena_database_name
+  table_name              = var.athena_table_name
 }
