@@ -107,3 +107,5 @@
   - Check de pods, PVCs, services e storage classes
   - Aguarda Grafana ficar pronto
   - Exibe o endpoint público do Grafana URL doLoadBalancer
+
+
