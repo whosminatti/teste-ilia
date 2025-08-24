@@ -122,25 +122,10 @@ jobs:
           echo "Verificando StorageClasses disponíveis:"
           kubectl get storageclass
     
-          # Atualiza a StorageClass gp2 existente para usar o EBS CSI Driver
-          if kubectl get storageclass gp2; then
-            echo "Atualizando StorageClass gp2 para usar EBS CSI Driver..."
-            kubectl patch storageclass gp2 -p '{"provisioner":"ebs.csi.aws.com", "parameters":{"type":"gp2", "fsType":"ext4"}, "volumeBindingMode":"WaitForFirstConsumer", "allowVolumeExpansion":true}'
-          else
-            echo "Criando StorageClass gp2..."
-            cat <<EOF | kubectl apply -f -
-            apiVersion: storage.k8s.io/v1
-            kind: StorageClass
-            metadata:
-              name: gp2
-            provisioner: ebs.csi.aws.com
-            parameters:
-              type: gp2
-              fsType: ext4
-            volumeBindingMode: WaitForFirstConsumer
-            allowVolumeExpansion: true
-            EOF
-          fi
+          kubectl delete storageclass gp2 --ignore-not-found
+    
+          echo "Aplicando StorageClass..."
+          kubectl apply -f manifests/storageclass-gp2.yaml
 
       - name: Verifica se EBS CSI Driver está funcionando
         run: |
