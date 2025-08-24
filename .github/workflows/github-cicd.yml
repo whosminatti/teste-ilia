@@ -117,27 +117,30 @@ jobs:
       #       --set node.serviceAccount.name=ebs-csi-node-sa \
       #       --wait --timeout=5m
 
-      - name: Verifica e cria StorageClass
+      - name: Atualiza StorageClass existente para usar EBS CSI
         run: |
-          echo "Verificando StorageClasses disponíveis:"
-          kubectl get storageclass
-                  
-          # Cria StorageClass se não existir
-          if ! kubectl get storageclass gp2 2>/dev/null; then
-            echo "Criando StorageClass gp2..."
-            cat <<EOF | kubectl apply -f -
-            apiVersion: storage.k8s.io/v1
-            kind: StorageClass
-            metadata:
-              name: gp2
-            provisioner: ebs.csi.aws.com
-            parameters:
-              type: gp2
-              fsType: ext4
-            volumeBindingMode: WaitForFirstConsumer
-            allowVolumeExpansion: true
-            EOF
-          fi
+              echo "Verificando StorageClasses disponíveis:"
+              kubectl get storageclass
+
+              # Atualiza a StorageClass gp2 existente para usar o EBS CSI Driver
+              if kubectl get storageclass gp2; then
+                echo "Atualizando StorageClass gp2 para usar EBS CSI Driver..."
+                kubectl patch storageclass gp2 -p '{"provisioner":"ebs.csi.aws.com", "parameters":{"type":"gp2", "fsType":"ext4"}, "volumeBindingMode":"WaitForFirstConsumer", "allowVolumeExpansion":true}'
+              else
+                echo "Criando StorageClass gp2..."
+                cat <<EOF | kubectl apply -f -
+                apiVersion: storage.k8s.io/v1
+                kind: StorageClass
+                metadata:
+                  name: gp2
+                provisioner: ebs.csi.aws.com
+                parameters:
+                  type: gp2
+                  fsType: ext4
+                volumeBindingMode: WaitForFirstConsumer
+                allowVolumeExpansion: true
+                EOF
+              fi
 
       - name: Verifica se EBS CSI Driver está funcionando
         run: |
