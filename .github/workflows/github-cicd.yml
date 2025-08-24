@@ -41,6 +41,9 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -var-file="main.tfvars" -out=tfplan
       
+      - name: Terraform State List
+        run: terraform state list
+      
       - name: Terraform Destroy
         run: terraform destroy -auto-approve -var-file="main.tfvars"
 
