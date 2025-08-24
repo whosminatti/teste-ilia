@@ -50,11 +50,11 @@ variable "disk_size" {
   description = "The volume size for the worker nodes (in GB)"
   type        = number
 }
-variable "database_name" {
+variable "timestream_database_name" {
   description = "Nome do banco de dados Timestream"
   type        = string
 }
-variable "table_name" {
+variable "timestream_table_name" {
   description = "Nome da tabela Timestream"
   type        = string
 }
