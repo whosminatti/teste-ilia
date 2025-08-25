@@ -1,5 +1,31 @@
 # teste-ilia
 
+## Desafio
+
+#### INSTRUÇÕES
+
+- Usar o Terraform para criar um cluster Kubernetes na AWS. Você deverá configurar o cluster de forma segura, escalável e eficiente.
+- Usar o Helm Charts para instalar e configurar um Grafana no cluster Kubernetes.Você deverá personalizar o Grafana de acordo com as necessidades.
+- Criar um AWS Timestream ou Athena e adicionar dados de teste no mesmo.
+- Adicionar o datasource do AWS Timestream ou Athena no Grafana e mostrar os dados do Timestream ou Athena por meio de algum dashboard. Você deverá criar gráficos, tabelas e painéis que apresentem as informações de forma clara e intuitiva.
+- Prover observabilidade dos recursos criados durante o desafio. Você deverá monitorar o desempenho, a disponibilidade e o consumo dos recursos.
+  
+- Esperamos que você documente todo o processo de criação do desafio, explicando as suas escolhas, os passos realizados e os resultados obtidos. Você também deverá fornecer os arquivos que foram usados no desafio por meio de um repositório no GitHub. Você será avaliado pela qualidade, criatividade e eficiência da sua solução. Boa sorte!
+- EXTRA
+  - Adicionar um microserviço a sua escolha no cluster, monitorar os logs e utilização de recursos dele no Grafana, implementar uma pipeline de CI/CD para esse serviço.
+  
+### O QUE FOI FEITO
+
+- Realizei a criação da infraestrutura utilizando Terraform via GitHub Actions e algumas ações manuais via AWS Console.
+- Infraestrutura provisionada pelo Terraform: VPC, IAM, Security Groups, EKS, Athena e S3.
+- Algumas Policies e Roles, como as presentes no final desse arquivo, foram elaboradas manualmente.
+- As configurações do Kubernetes foram realizadas via GitHub Actions, assim como a instalação do Grafana.
+- Após a criação da Infraestrutura e deploy do Grafana no cluster, o mesmo encontra-se disponível neste [link](http://a8a5c287c65b84f4c8d5fa6623e0024b-e5f418666810f11a.elb.us-east-1.amazonaws.com/admin/users/edit/aew325mwfrhfkd).
+- Após acessar o Grafana, dicionei o Data Source Athena através do plugin já existente na aplicação.
+- Para popular o Athena utilizei alguns dados fictícios e realizei a adição do arquivo .csv no S3 manualmente.
+
+Algumas informações relacionadas à infraestrutura e ao deploy via Actions podem ser encontradas abaixo:
+
 ---
 
 # Infraestrutura
@@ -51,11 +77,19 @@
     - Ingress: API Server do Kubernetes liberada para qualquer origem na porta 443
     - Egress: Todo o tráfego liberado
 
-### Timestream
+### Athena
 
-- Database Timestream
-- Tabela Timestream
+- S3 Bucket dedicado para armazenamento dos dados processados pelo Athena
+- Bucket com política de acesso permitindo a role eks-grafana-sa realizar operações completas (s3:*)
+- Glue Catalog Database
+  - Banco de dados no Glue Catalog para organização das tabelas do Athena
+- Glue Catalog Table
+  - Tabela externa configurada para leitura de arquivos Parquet no bucket S3
+  - Schema da tabela definido conforme os dados inseridos
+- Permissões
+  - Acesso controlado via IAM Role específica para integração com o EKS/Grafana
 
+---
 
 # GitHub Actions Workflow
 
