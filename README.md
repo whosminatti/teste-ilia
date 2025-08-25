@@ -196,58 +196,59 @@ Já em relação as policies foram criadas as polciies:
     - 'GlueS3' para permitir algumas ações no glue, S3 e Athena.
       ~~~json
       {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": [
-                    "s3:GetObject",
-                    "s3:PutObject",
-                    "s3:ListBucket",
-                    "s3:GetBucketPolicy",
-                    "s3:GetBucketAcl",
-                    "s3:GetBucketCORS",
-                    "s3:GetBucketWebsite",
-                    "s3:GetBucketLocation",
-                    "s3:GetEncryptionConfiguration",
-                    "s3:AbortMultipartUpload",
-                    "s3:GetBucketVersioning",
-                    "s3:GetAccelerateConfiguration",
-                    "s3:GetBucketRequestPayment",
-                    "s3:GetBucketLogging",
-                    "s3:GetLifecycleConfiguration",
-                    "s3:GetReplicationConfiguration",
-                    "s3:GetBucketObjectLockConfiguration",
-                    "s3:GetBucketTagging",
-                    "s3:DeleteObject",
-                    "s3:PutObjectAcl",
-                    "s3:ListBucketMultipartUploads",
-                    "s3:*"
-                ],
-                "Resource": [
-                    "arn:aws:s3:::teste-ilia-athena-data",
-                    "arn:aws:s3:::teste-ilia-athena-data/*"
-                ]
-            },
-            {
-                "Effect": "Allow",
-                "Action": [
-                    "glue:GetDatabase",
-                    "glue:GetDatabases",
-                    "glue:GetTable",
-                    "glue:GetTables",
-                    "glue:GetTags",
-                    "glue:CreateTable",
-                    "glue:UpdateTable",
-                    "glue:DeleteTable"
-                ],
-                "Resource": [
-                    "arn:aws:glue:us-east-1:184488529047:catalog",
-                    "arn:aws:glue:us-east-1:184488529047:database/monitoring_db",
-                    "arn:aws:glue:us-east-1:184488529047:table/monitoring_db/*"
-                ]
-            }
-        ]
+      	"Version": "2012-10-17",
+      	"Statement": [
+      		{
+      			"Effect": "Allow",
+      			"Action": [
+      				"s3:GetObject",
+      				"s3:PutObject",
+      				"s3:ListBucket",
+      				"s3:GetBucketPolicy",
+      				"s3:GetBucketAcl",
+      				"s3:GetBucketCORS",
+      				"s3:GetBucketWebsite",
+      				"s3:GetBucketLocation",
+      				"s3:GetEncryptionConfiguration",
+      				"s3:AbortMultipartUpload",
+      				"s3:GetBucketVersioning",
+      				"s3:GetAccelerateConfiguration",
+      				"s3:GetBucketRequestPayment",
+      				"s3:GetBucketLogging",
+      				"s3:GetLifecycleConfiguration",
+      				"s3:GetReplicationConfiguration",
+      				"s3:GetBucketObjectLockConfiguration",
+      				"s3:GetBucketTagging",
+      				"s3:DeleteObject",
+      				"s3:PutObjectAcl",
+      				"s3:ListBucketMultipartUploads",
+      				"s3:*"
+      			],
+      			"Resource": [
+      				"arn:aws:s3:::teste-ilia-athena-data",
+      				"arn:aws:s3:::teste-ilia-athena-data/*"
+      			]
+      		},
+      		{
+      			"Effect": "Allow",
+      			"Action": [
+      				"glue:GetDatabase",
+      				"glue:GetDatabases",
+      				"glue:GetTable",
+      				"glue:GetTables",
+      				"glue:GetTags",
+      				"glue:CreateTable",
+      				"glue:UpdateTable",
+      				"glue:DeleteTable"
+      			],
+      			"Resource": [
+      				"arn:aws:glue:us-east-1:184488529047:catalog",
+      				"arn:aws:glue:us-east-1:184488529047:database/monitoring_db",
+      				"arn:aws:glue:us-east-1:184488529047:table/monitoring_db/*",
+      				"arn:aws:glue:us-east-1:184488529047:userDefinedFunction/monitoring_db/*"
+      			]
+      		}
+      	]
       }
       ~~~
     

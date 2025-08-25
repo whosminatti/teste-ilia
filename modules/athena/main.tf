@@ -6,6 +6,27 @@ resource "aws_s3_bucket" "athena_data" {
   }
 }
 
+resource "aws_s3_bucket_policy" "athena_data_policy" {
+  bucket = aws_s3_bucket.athena_data.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::184488529047:role/eks-grafana-sa"
+        }
+        Action = "s3:*"
+        Resource = [
+          "arn:aws:s3:::${aws_s3_bucket.athena_data.bucket}",
+          "arn:aws:s3:::${aws_s3_bucket.athena_data.bucket}/*"
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_glue_catalog_database" "athena_db" {
   name = var.database_name
 }
