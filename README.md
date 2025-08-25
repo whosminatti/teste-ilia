@@ -138,12 +138,11 @@ Algumas informações relacionadas à infraestrutura e ao deploy via Actions pod
   - Aguarda Grafana ficar pronto
   - Exibe o endpoint público do Grafana URL doLoadBalancer
 
-
 ### Demais ações
-Alguma policies e roles foram criadas na mão pra facilitar e agilizar a disponibilidade do Grafana e a integração com o Datasource do Athena.
-Dentre as roles está a role 'eks-grafana-sa' que tem a relação de confiança para se conectar ao Athena.
+Conforme relatado acima, algumas policies e roles foram criadas na mão pra facilitar e agilizar a disponibilidade do Grafana e a integração com o Datasource do Athena, como as roles e policies abaixo.
+
   - Roles:
-    - 'AssumeRole' para a role eks-grafana-sa
+    - 'AssumeRole' para a role eks-grafana-sa 
     ~~~json
     {
       "Version": "2012-10-17",
