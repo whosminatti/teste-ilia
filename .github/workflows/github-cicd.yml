@@ -162,6 +162,19 @@ jobs:
           kubectl get pvc grafana-pvc -n monitoring -o wide
           kubectl describe pvc grafana-pvc -n monitoring
 
+      - name: Garante ServiceAccount do Grafana com annotation IRSA
+        env:
+          SA_NAME: grafana-sa
+          NAMESPACE: monitoring
+          ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/eks-grafana-sa
+        run: |
+          if ! kubectl get serviceaccount $SA_NAME -n $NAMESPACE >/dev/null 2>&1; then
+            echo "Criando ServiceAccount $SA_NAME..."
+            kubectl create serviceaccount $SA_NAME -n $NAMESPACE
+          fi
+          # Adiciona/atualiza annotation do IRSA
+          kubectl annotate serviceaccount $SA_NAME -n $NAMESPACE eks.amazonaws.com/role-arn=$ROLE_ARN --overwrite
+
       - name: Add Grafana Helm repo and update
         run: |
           helm repo add grafana https://grafana.github.io/helm-charts
@@ -176,6 +189,8 @@ jobs:
             --set adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }} \
             --set service.type=LoadBalancer \
             --set service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-type"="nlb" \
+            --set serviceAccount.create=false \
+            --set serviceAccount.name=grafana-sa \
             --wait --timeout=15m
 
       - name: Checa status recursos
