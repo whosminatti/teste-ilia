@@ -20,7 +20,7 @@
 - Infraestrutura provisionada pelo Terraform: VPC, IAM, Security Groups, EKS, Athena e S3.
 - Algumas Policies e Roles, como as presentes no final desse arquivo, foram elaboradas manualmente.
 - As configurações do Kubernetes foram realizadas via GitHub Actions, assim como a instalação do Grafana.
-- Após a criação da Infraestrutura e deploy do Grafana no cluster, o mesmo encontra-se disponível neste [link](http://a8a5c287c65b84f4c8d5fa6623e0024b-e5f418666810f11a.elb.us-east-1.amazonaws.com/admin/users/edit/aew325mwfrhfkd).
+- Após a criação da Infraestrutura e deploy do Grafana no cluster via Helm, o mesmo encontra-se disponível neste [link](http://a8a5c287c65b84f4c8d5fa6623e0024b-e5f418666810f11a.elb.us-east-1.amazonaws.com/admin/users/edit/aew325mwfrhfkd).
 - Após acessar o Grafana, dicionei o Data Source Athena através do plugin já existente na aplicação.
 - Para popular o Athena utilizei alguns dados fictícios e realizei a adição do arquivo .csv no S3 manualmente.
 
